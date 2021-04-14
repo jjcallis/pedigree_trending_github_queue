@@ -1,0 +1,77 @@
+# name: Build Production Docker Image
+# on:
+#   push:
+#     branches:
+#       - master
+
+# jobs:
+#   build:
+#     runs-on: ubuntu-16.04
+#     steps:
+#       - name: Checkout Code
+#         uses: actions/checkout@v2
+
+#       - name: Setup PHP
+#         uses: shivammathur/setup-php@v2
+#         with:
+#           php-version: '8.0'
+
+#       - name: Set generated env vars
+#         id: build_number
+#         run: |
+#           echo ::set-output name=number::$(echo ${GITHUB_SHA} | cut -c1-8)
+
+#       - name: Get Composer Cache Directory
+#         id: composer-cache
+#         run: |
+#           echo "::set-output name=dir::$(composer config cache-files-dir)"
+
+#       - name: Cache Composer
+#         uses: actions/cache@v1
+#         with:
+#           path: ${{ steps.composer-cache.outputs.dir }}
+#           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
+#           restore-keys: |
+#             ${{ runner.os }}-composer-
+
+#       - name: Install composer dependencies
+#         run: composer install --prefer-dist --no-dev
+
+#       - name: Bump version and push tag
+#         id: tagging
+#         if: contains(github.ref, 'master')
+#         uses: anothrNick/github-tag-action@1.21.0
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GIT_ORG_REPO_TAG }}
+#           DEFAULT_BUMP: patch
+#           WITH_V: "true"
+
+#       - name: Build NGINX Docker image and Push to ECR
+#         uses: kciter/aws-ecr-action@master
+#         env:
+#           repo: pedigree-production-queue-nginx
+#         with:
+#           access_key_id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
+#           secret_access_key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
+#           account_id: ${{ secrets.OSO_PROD_AWS_ACCOUNT_ID }}
+#           dockerfile: ./docker/app/nginx/Dockerfile
+#           path: ./
+#           repo: ${{ env.repo }}
+#           region: eu-west-2
+#           tags: ${{ steps.tagging.outputs.new_tag }}
+#           create_repo: false
+
+#       - name: Build PHP Docker image and Push to ECR
+#         uses: kciter/aws-ecr-action@master
+#         env:
+#           repo: pedigree-production-queue-php
+#         with:
+#           access_key_id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
+#           secret_access_key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
+#           account_id: ${{ secrets.OSO_PROD_AWS_ACCOUNT_ID }}
+#           dockerfile: ./docker/app/php/production/Dockerfile
+#           path: ./
+#           repo: ${{ env.repo }}
+#           region: eu-west-2
+#           tags: ${{ steps.tagging.outputs.new_tag }}
+#           create_repo: false
