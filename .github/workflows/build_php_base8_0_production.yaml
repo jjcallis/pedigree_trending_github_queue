@@ -1,10 +1,10 @@
-name: Build & Push Production PHP-Base 8.0 Image
+name: Build & Push PHP-Base 8.0 Image Production
 on:
   push:
-    branches:
+    branches: 
       - 'php8'
     paths:
-      - 'docker/app/php-base/8.0/**'
+      - './docker/app/php-base/8.0/**'
 
 jobs:
   build:
