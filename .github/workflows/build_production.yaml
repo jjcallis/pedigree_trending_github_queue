@@ -2,24 +2,25 @@ name: Build Production Docker Image
 on:
   push:
     branches:
-      - main
-
+      - 'main'
 jobs:
   build:
-    runs-on: ubuntu-16.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.0'
 
       - name: Set generated env vars
         id: build_number
         run: |
           echo ::set-output name=number::$(echo ${GITHUB_SHA} | cut -c1-8)
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          access_key_id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
+          secret_access_key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-region: eu-west-2
 
       - name: Get Composer Cache Directory
         id: composer-cache
@@ -37,41 +38,24 @@ jobs:
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-dev
 
-      - name: Bump version and push tag
-        id: tagging
-        if: contains(github.ref, 'master')
-        uses: anothrNick/github-tag-action@1.21.0
-        env:
-          GITHUB_TOKEN: ${{ secrets.GIT_ORG_REPO_TAG }}
-          DEFAULT_BUMP: patch
-          WITH_V: "true"
-
-      - name: Build NGINX Docker image and Push to ECR
-        uses: kciter/aws-ecr-action@master
-        env:
-          repo: pedigree-production-queue-nginx
+      - name: Login to ECR
+        id: ecr
+        uses: jwalton/gh-ecr-login@v1
         with:
           access_key_id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
           secret_access_key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
-          account_id: ${{ secrets.OSO_PROD_AWS_ACCOUNT_ID }}
-          dockerfile: ./docker/app/nginx/Dockerfile
-          path: ./
-          repo: ${{ env.repo }}
           region: eu-west-2
-          tags: ${{ steps.tagging.outputs.new_tag }}
-          create_repo: false
 
-      - name: Build PHP Docker image and Push to ECR
-        uses: kciter/aws-ecr-action@master
-        env:
-          repo: pedigree-production-queue-php
-        with:
-          access_key_id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
-          secret_access_key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
-          account_id: ${{ secrets.OSO_PROD_AWS_ACCOUNT_ID }}
-          dockerfile: ./docker/app/php/production/Dockerfile
-          path: ./
-          repo: ${{ env.repo }}
-          region: eu-west-2
-          tags: ${{ steps.tagging.outputs.new_tag }}
-          create_repo: false
+      - name: Build NGINX
+        run: docker build -f ./docker/app/nginx/Dockerfile --no-cache=true --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -t ${{ steps.ecr.outputs.account }}.dkr.ecr.eu-west-2.amazonaws.com/pedigree-production-queue-nginx:${{ steps.build_number.outputs.number }} .
+
+      - name: Push NGINX
+        run: |
+          docker push ${{ steps.ecr.outputs.account }}.dkr.ecr.eu-west-2.amazonaws.com/pedigree-production-queue-nginx:${{ steps.build_number.outputs.number }}
+
+      - name: Build PHP
+        run: docker build -f ./docker/app/php/production/Dockerfile --no-cache=true --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -t ${{ steps.ecr.outputs.account }}.dkr.ecr.eu-west-2.amazonaws.com/pedigree-production-queue-php:${{ steps.build_number.outputs.number }} .
+
+      - name: Push PHP
+        run: |
+          docker push ${{ steps.ecr.outputs.account }}.dkr.ecr.eu-west-2.amazonaws.com/pedigree-production-queue-php:${{ steps.build_number.outputs.number }}
