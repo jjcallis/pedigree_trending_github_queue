@@ -43,16 +43,15 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
         
+      - name: Build
+        uses: docker/build-push-action@master
+        with:
+          context: .
+          file: ./docker/app/php/production/Dockerfile
+        
       # - name: Build NGINX
       #   run: docker build -f ./docker/app/nginx/Dockerfile --no-cache=true --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -t ${{ steps.login-ecr.outputs.account }}.dkr.ecr.eu-west-2.amazonaws.com/pedigree-production-queue-nginx:${{ steps.build_number.outputs.number }} .
 
       # - name: Push NGINX
       #   run: |
       #     docker push ${{ steps.login-ecr.outputs.account }}.dkr.ecr.eu-west-2.amazonaws.com/pedigree-production-queue-nginx:${{ steps.build_number.outputs.number }}
-
-      - name: Build PHP
-        run: docker build -f ./docker/app/php/production/Dockerfile --no-cache=true --build-arg BUILD_DATE=$(date -u +'%Y-%m-%dT%H:%M:%SZ') -t ${{ steps.login-ecr.outputs.account }}.dkr.ecr.eu-west-2.amazonaws.com/pedigree-production-queue-php:${{ steps.build_number.outputs.number }} .
-
-      - name: Push PHP
-        run: |
-          docker push ${{ steps.login-ecr.outputs.account }}.dkr.ecr.eu-west-2.amazonaws.com/pedigree-production-queue-php:${{ steps.build_number.outputs.number }}
