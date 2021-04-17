@@ -18,8 +18,8 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ secrets.ACCESS_ID }}
+          aws-secret-access-key: ${{ secrets.ACCESS_KEY }}
           aws-region: eu-west-2
 
       - name: Get Composer Cache Directory
@@ -42,8 +42,8 @@ jobs:
         id: ecr
         uses: jwalton/gh-ecr-login@v1
         with:
-          access-key-id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
-          secret-access-key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
+          access-key-id: ${{ secrets.ACCESS_ID }}
+          secret-access-key: ${{ secrets.ACCESS_KEY }}
           region: eu-west-2
 
       - name: Build NGINX
