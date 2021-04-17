@@ -5,7 +5,7 @@ on:
       - 'main'
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-16.04
     steps:
       - name: Checkout Code
         uses: actions/checkout@v2
@@ -30,30 +30,34 @@ jobs:
 
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-dev
-
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          aws-access-key-id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
-          aws-region: eu-west-2
           
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v1
-        
-      - name: Build NGINX
-        uses: docker/build-push-action@master
+      - name: Build NGINX Docker image and Push to ECR
+        uses: kciter/aws-ecr-action@master
+        env:
+          repo: pedigree-production-queue-nginx
         with:
-          context: .
-          file: ./docker/app/nginx/Dockerfile
+          access_key_id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
+          secret_access_key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
+          account_id: ${{ secrets.OSO_PROD_AWS_ACCOUNT_ID }}
+          dockerfile: ./docker/app/php/production/Dockerfile
+          path: ./
+          repo: ${{ env.repo }}
           region: eu-west-2
           tags: ${{ steps.build_number.outputs.number }}
+          create_repo: false
         
-      - name: Build PHP
-        uses: docker/build-push-action@master
+      - name: Build PHP Docker image and Push to ECR
+        uses: kciter/aws-ecr-action@master
+        env:
+          repo: pedigree-production-queue-php
         with:
-          context: .
-          file: ./docker/app/php/production/Dockerfile
+          access_key_id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
+          secret_access_key: ${{ secrets.OSO_PROD_AWS_SECRET_ACCESS_KEY }}
+          account_id: ${{ secrets.OSO_PROD_AWS_ACCOUNT_ID }}
+          dockerfile: ./docker/app/php/production/Dockerfile
+          path: ./
+          repo: ${{ env.repo }}
           region: eu-west-2
           tags: ${{ steps.build_number.outputs.number }}
+          create_repo: false
+          

@@ -1,4 +1,4 @@
-FROM 1510999144577.dkr.ecr.eu-west-2.amazonaws.com/pedigree/php-base:8.0
+FROM 510999144577.dkr.ecr.eu-west-2.amazonaws.com/pedigree/php-base:8.0
 LABEL maintainer="josh@osodevops.io"
 
 ARG BUILD_DATE
