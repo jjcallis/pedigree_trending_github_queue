@@ -31,12 +31,11 @@ jobs:
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-dev
 
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.OSO_PROD_AWS_ACCOUNT_ID }}
+          aws-access-key-id: ${{ secrets.OSO_PROD_AWS_ACCOUNT_ID }}
+          aws-secret-access-key: ${{ secrets.OSO_PROD_AWS_ACCESS_KEY_ID }}
           aws-region: eu-west-2
           
       - name: Login to Amazon ECR
@@ -48,9 +47,13 @@ jobs:
         with:
           context: .
           file: ./docker/app/nginx/Dockerfile
+          region: eu-west-2
+          tags: ${{ steps.build_number.outputs.number }}
         
       - name: Build PHP
         uses: docker/build-push-action@master
         with:
           context: .
           file: ./docker/app/php/production/Dockerfile
+          region: eu-west-2
+          tags: ${{ steps.build_number.outputs.number }}
