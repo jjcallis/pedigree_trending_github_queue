@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use App\Jobs\ProgrammingLanguageSeeder;
+use Illuminate\Support\Facades\Artisan;
 
 class GithubIndexCommand extends Command
 {
@@ -27,6 +29,19 @@ class GithubIndexCommand extends Command
      */
     public function handle()
     {
+        $this->resetTemporaryDatabase();
+        $this->queueInitialIndexing();
         return 0;
+    }
+
+    private function resetTemporaryDatabase()
+    {
+        Artisan::call('migrate:fresh');
+        dispatch(app(ProgrammingLanguageSeeder::class));
+    }
+
+    private function queueInitialIndexing()
+    {
+        //
     }
 }
