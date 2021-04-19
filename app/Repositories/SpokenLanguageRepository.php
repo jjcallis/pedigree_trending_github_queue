@@ -2,6 +2,8 @@
 
 namespace App\Repositories;
 
+use Illuminate\Support\Collection;
+
 class SpokenLanguageRepository
 {
     /** @var string */
@@ -195,11 +197,13 @@ class SpokenLanguageRepository
         "zu" => "Zulu"
     ];
 
-    public function all()
+    public function all(): Collection
     {
-        return array_map(function ($code) {
-            return $this->createLanguageFromCode($code);
-        }, array_keys($this->data));
+        return collect(
+            array_map(function ($code) {
+                return $this->createLanguageFromCode($code);
+            }, array_keys($this->data))
+        );
     }
 
     public function find($code = self::DEFAULT_LANGUAGE_CODE)

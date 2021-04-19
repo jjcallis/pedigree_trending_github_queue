@@ -2,9 +2,12 @@
 
 namespace App\Console\Commands;
 
+use App\Models\Language;
 use Illuminate\Console\Command;
+use App\Jobs\GitHubTrendingIndex;
 use App\Jobs\ProgrammingLanguageSeeder;
 use Illuminate\Support\Facades\Artisan;
+use App\Repositories\SpokenLanguageRepository;
 
 class GithubIndexCommand extends Command
 {
@@ -42,6 +45,11 @@ class GithubIndexCommand extends Command
 
     private function queueInitialIndexing()
     {
-        //
+        $spokenLanguages = app(SpokenLanguageRepository::class);
+        Language::pluck('code')->each(function ($programmingLanguage) use ($spokenLanguages) {
+            $spokenLanguages->all()->each(function ($spokenLanguage) use ($programmingLanguage) {
+                dispatch(new GitHubTrendingIndex($programmingLanguage, $spokenLanguage));
+            });
+        });
     }
 }

@@ -19,12 +19,9 @@ class ProgrammingLanguageSeeder implements ShouldQueue
     use InteractsWithQueue;
     use Queueable;
 
-    /** @var \App\Repositories\LanguageColoursRepository */
-    private LanguageColoursRepository $colours;
-
-    public function __construct(LanguageColoursRepository $colours)
+    public function __construct(private LanguageColoursRepository $colours)
     {
-        $this->colours = $colours;
+        //
     }
 
     /**
@@ -34,7 +31,6 @@ class ProgrammingLanguageSeeder implements ShouldQueue
      */
     public function handle(): int
     {
-        Language::query()->delete();
         Language::query()->insert(
             $this->getLanguages()->map(function ($language) {
                 return [
@@ -51,6 +47,7 @@ class ProgrammingLanguageSeeder implements ShouldQueue
     private function getLanguages(): Collection
     {
         $languages = [];
+
         try {
             $languages = json_decode(
                 Http::get("https://api.github.com/languages")->getBody()->getContents(),
